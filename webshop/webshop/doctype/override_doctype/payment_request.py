@@ -34,6 +34,7 @@ class PaymentRequest(OriginalPaymentRequest):
                     "Orders": "/orders",
                     "Invoices": "/invoices",
                     "My Account": "/me",
+                    "Home": "/index"
                 }
             ).get(success_url, "/me")
 
