@@ -239,7 +239,7 @@
    "fieldtype": "Select",
    "label": "Payment Success Url",
    "mandatory_depends_on": "enable_checkout",
-   "options": "\nOrders\nInvoices\nMy Account"
+   "options": "\nOrders\nInvoices\nMy Account\nHome"
   },
   {
    "fieldname": "column_break_27",
@@ -387,7 +387,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-03-22 13:01:51.906319",
+ "modified": "2025-07-09 16:34:17.779246",
  "modified_by": "Administrator",
  "module": "Webshop",
  "name": "Webshop Settings",
