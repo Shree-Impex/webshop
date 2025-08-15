@@ -152,69 +152,141 @@ def request_for_quotation():
 	return quotation.name
 
 
+# @frappe.whitelist()
+# def update_cart(item_code, qty, additional_notes=None, with_items=False):
+# 	quotation = _get_cart_quotation()
+
+# 	empty_card = False
+# 	qty = flt(qty)
+# 	if qty == 0:
+# 		quotation_items = quotation.get("items", {"item_code": ["!=", item_code]})
+# 		if quotation_items:
+# 			quotation.set("items", quotation_items)
+# 		else:
+# 			empty_card = True
+
+# 	else:
+# 		warehouse = frappe.get_cached_value(
+# 			"Website Item", {"item_code": item_code}, "website_warehouse"
+# 		)
+
+# 		quotation_items = quotation.get("items", {"item_code": item_code})
+# 		if not quotation_items:
+# 			quotation.append(
+# 				"items",
+# 				{
+# 					"doctype": "Quotation Item",
+# 					"item_code": item_code,
+# 					"qty": qty,
+# 					"additional_notes": additional_notes,
+# 					"warehouse": warehouse,
+# 				},
+# 			)
+# 		else:
+# 			quotation_items[0].qty = qty
+# 			quotation_items[0].warehouse = warehouse
+# 			quotation_items[0].additional_notes = additional_notes
+
+# 	apply_cart_settings(quotation=quotation)
+
+# 	quotation.flags.ignore_permissions = True
+# 	quotation.payment_schedule = []
+# 	if not empty_card:
+# 		quotation.save()
+# 	else:
+# 		quotation.delete()
+# 		quotation = None
+
+# 	set_cart_count(quotation)
+
+# 	if cint(with_items):
+# 		context = get_cart_quotation(quotation)
+# 		return {
+# 			"items": frappe.render_template(
+# 				"templates/includes/cart/cart_items.html", context
+# 			),
+# 			"total": frappe.render_template(
+# 				"templates/includes/cart/cart_items_total.html", context
+# 			),
+# 			"taxes_and_totals": frappe.render_template(
+# 				"templates/includes/cart/cart_payment_summary.html", context
+# 			),
+# 		}
+# 	else:
+# 		return {"name": quotation.name}
+
+
+
+
 @frappe.whitelist()
 def update_cart(item_code, qty, additional_notes=None, with_items=False):
-	quotation = _get_cart_quotation()
+    quotation = _get_cart_quotation()
+    empty_card = False
+    qty = flt(qty)
 
-	empty_card = False
-	qty = flt(qty)
-	if qty == 0:
-		quotation_items = quotation.get("items", {"item_code": ["!=", item_code]})
-		if quotation_items:
-			quotation.set("items", quotation_items)
-		else:
-			empty_card = True
+    if qty == 0:
+        quotation_items = quotation.get("items", {"item_code": ["!=", item_code]})
+        if quotation_items:
+            quotation.set("items", quotation_items)
+        else:
+            empty_card = True
+    else:
+        # Get website item details
+        website_item = frappe.get_cached_doc("Website Item", {"item_code": item_code})
+        warehouse = website_item.website_warehouse
+        custom_selling_qty = website_item.custom_selling_qty
 
-	else:
-		warehouse = frappe.get_cached_value(
-			"Website Item", {"item_code": item_code}, "website_warehouse"
-		)
+        # Set UOM as "Bundle" only if custom_selling_qty > 0
+        uom = "Bundle" if custom_selling_qty and custom_selling_qty > 0 else None
 
-		quotation_items = quotation.get("items", {"item_code": item_code})
-		if not quotation_items:
-			quotation.append(
-				"items",
-				{
-					"doctype": "Quotation Item",
-					"item_code": item_code,
-					"qty": qty,
-					"additional_notes": additional_notes,
-					"warehouse": warehouse,
-				},
-			)
-		else:
-			quotation_items[0].qty = qty
-			quotation_items[0].warehouse = warehouse
-			quotation_items[0].additional_notes = additional_notes
+        quotation_items = quotation.get("items", {"item_code": item_code})
 
-	apply_cart_settings(quotation=quotation)
+        if not quotation_items:
+            quotation.append(
+                "items",
+                {
+                    "doctype": "Quotation Item",
+                    "item_code": item_code,
+                    "qty": qty,
+                    "uom": uom,
+                    "additional_notes": additional_notes,
+                    "warehouse": warehouse,
+                },
+            )
+        else:
+            quotation_items[0].qty = qty
+            if uom:
+                quotation_items[0].uom = uom
+            quotation_items[0].warehouse = warehouse
+            quotation_items[0].additional_notes = additional_notes
 
-	quotation.flags.ignore_permissions = True
-	quotation.payment_schedule = []
-	if not empty_card:
-		quotation.save()
-	else:
-		quotation.delete()
-		quotation = None
+    apply_cart_settings(quotation=quotation)
 
-	set_cart_count(quotation)
+    quotation.flags.ignore_permissions = True
+    quotation.payment_schedule = []
+    if not empty_card:
+        quotation.save()
+    else:
+        quotation.delete()
+        quotation = None
 
-	if cint(with_items):
-		context = get_cart_quotation(quotation)
-		return {
-			"items": frappe.render_template(
-				"templates/includes/cart/cart_items.html", context
-			),
-			"total": frappe.render_template(
-				"templates/includes/cart/cart_items_total.html", context
-			),
-			"taxes_and_totals": frappe.render_template(
-				"templates/includes/cart/cart_payment_summary.html", context
-			),
-		}
-	else:
-		return {"name": quotation.name}
+    set_cart_count(quotation)
 
+    if cint(with_items):
+        context = get_cart_quotation(quotation)
+        return {
+            "items": frappe.render_template(
+                "templates/includes/cart/cart_items.html", context
+            ),
+            "total": frappe.render_template(
+                "templates/includes/cart/cart_items_total.html", context
+            ),
+            "taxes_and_totals": frappe.render_template(
+                "templates/includes/cart/cart_payment_summary.html", context
+            ),
+        }
+    else:
+        return {"name": quotation.name}
 
 @frappe.whitelist()
 def get_shopping_cart_menu(context=None):
