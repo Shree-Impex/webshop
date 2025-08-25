@@ -181,6 +181,7 @@ def update_cart(item_code, qty, additional_notes=None, with_items=False , uom=No
 					"uom": uom or "Nos",  # Set UOM as "Bundle" if custom_selling_qty > 0
 					"additional_notes": additional_notes,
 					"warehouse": warehouse,
+					"taxes_and_charges":"No Tax"
 				},
 			)
 		else:
